@@ -1,0 +1,20 @@
+User-agent: *
+Allow: /
+Allow: /search
+Allow: /product/*
+Allow: /favorites
+
+Disallow: /api/
+Disallow: /*.json$
+Disallow: /auth
+
+Crawl-delay: 1
+
+# Sitemap
+Sitemap: https://cenomer.ru/sitemap.xml
+
+User-agent: AdsBot-Google
+Crawl-delay: 0
+
+User-agent: Googlebot
+Crawl-delay: 0
