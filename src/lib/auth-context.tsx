@@ -1,33 +1,40 @@
+/**
+ * AuthContext — единый источник правды об авторизации.
+ * onAuthStateChange сразу стреляет с текущей сессией → getSession() не нужен.
+ */
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
-import type { User } from "@supabase/supabase-js";
+import type { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
-type AuthContextValue = {
+interface AuthContextValue {
   user: User | null;
+  session: Session | null;
   loading: boolean;
-};
+}
 
-const AuthContext = createContext<AuthContextValue>({ user: null, loading: true });
+const AuthContext = createContext<AuthContextValue>({ user: null, session: null, loading: true });
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    // onAuthStateChange сразу эмитит INITIAL_SESSION с текущей сессией.
+    // Отдельный getSession() избыточен и создаёт двойной запрос.
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
       setUser(session?.user ?? null);
-      setLoading(false);
-    });
-    supabase.auth.getSession().then(({ data }) => {
-      setUser(data.session?.user ?? null);
       setLoading(false);
     });
     return () => subscription.unsubscribe();
   }, []);
 
-  return <AuthContext.Provider value={{ user, loading }}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={{ user, session, loading }}>
+      {children}
+    </AuthContext.Provider>
+  );
 }
 
 export function useAuth() {

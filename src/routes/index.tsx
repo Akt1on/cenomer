@@ -1,11 +1,14 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
+import { useMemo } from "react";
 import { ShieldCheck, Sparkles, Zap } from "lucide-react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SearchBar } from "@/components/SearchBar";
 import { ProductCard } from "@/components/ProductCard";
 import { getHomeData } from "@/lib/products.functions";
+import { HomePageSkeleton } from "@/components/Skeletons";
+import { Suspense } from "react";
 
 const homeQuery = queryOptions({
   queryKey: ["home"],
@@ -24,10 +27,8 @@ export const Route = createFileRoute("/")({
     ],
   }),
   loader: ({ context }) => context.queryClient.ensureQueryData(homeQuery),
-  component: IndexPage,
-  errorComponent: ({ error }) => (
-    <div className="p-8 text-center text-destructive">{error.message}</div>
-  ),
+  component: () => <Suspense fallback={<HomePageSkeleton />}><IndexPage /></Suspense>,
+  errorComponent: ({ error }) => <div className="p-8 text-center text-destructive">{error.message}</div>,
 });
 
 const STORES = [
@@ -36,6 +37,87 @@ const STORES = [
   { name: "Магнит", color: "#E2231A" },
   { name: "Лента", color: "#003C96" },
 ];
+
+
+// ── Keyword → category slug маппинг для персонализации ──────────────────
+const KEYWORD_CATEGORY: Record<string, string> = {
+  молоко: "molochnye", кефир: "molochnye", йогурт: "molochnye", сыр: "syry",
+  мясо: "myaso", курица: "ptitsa", говядина: "myaso", свинина: "myaso",
+  рыба: "ryba", лосось: "ryba", треска: "ryba",
+  хлеб: "hleb", батон: "hleb", булка: "vypechka",
+  яйца: "yaytsa", яйцо: "yaytsa",
+  колбаса: "kolbasy", сосиски: "kolbasy",
+  макарон: "makarony", паста: "makarony",
+  крупа: "krupy", рис: "krupy", гречка: "krupy",
+  масло: "masla", оливковое: "masla",
+  бананы: "frukty", яблоки: "frukty", апельсин: "frukty",
+  овощи: "ovoshi", помидоры: "ovoshi", огурцы: "ovoshi",
+};
+
+interface CategoryItem { id: string; slug: string; name: string; icon: string; }
+
+function PersonalizedCategories({ allCategories }: { allCategories: CategoryItem[] }) {
+  const personalizedSlugs = useMemo(() => {
+    try {
+      const history: string[] = JSON.parse(localStorage.getItem("cenomer-search-history") ?? "[]");
+      const slugSet = new Set<string>();
+      for (const q of history) {
+        const words = q.toLowerCase().split(/\s+/);
+        for (const word of words) {
+          for (const [kw, slug] of Object.entries(KEYWORD_CATEGORY)) {
+            if (word.startsWith(kw)) { slugSet.add(slug); break; }
+          }
+        }
+      }
+      return [...slugSet].slice(0, 3);
+    } catch { return []; }
+  }, []);
+
+  const catMap = useMemo(
+    () => new Map(allCategories.map((c) => [c.slug, c])),
+    [allCategories]
+  );
+
+  const personalizedCats = personalizedSlugs
+    .map((s) => catMap.get(s))
+    .filter(Boolean) as CategoryItem[];
+
+  const showPersonalized = personalizedCats.length > 0;
+  const label = showPersonalized ? "Ваши категории" : "Популярные категории";
+  const displayCats = showPersonalized
+    ? [...personalizedCats, ...allCategories.filter((c) => !personalizedSlugs.includes(c.slug)).slice(0, 4 - personalizedCats.length)]
+    : allCategories;
+
+  return (
+    <>
+      <h2 className="mb-5 font-display text-2xl font-bold tracking-tight sm:text-3xl">
+        {label}
+      </h2>
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
+        {displayCats.map((c, i) => (
+          <motion.div
+            key={c.id}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: i * 0.04 }}
+          >
+            <Link
+              to="/search"
+              search={{ category: c.slug }}
+              className="group flex items-center gap-3 rounded-2xl border border-border bg-card p-4 shadow-soft transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-lift"
+            >
+              <span className="text-3xl">{c.icon}</span>
+              <div>
+                <p className="font-medium leading-tight">{c.name}</p>
+                <p className="text-xs text-muted-foreground group-hover:text-primary">Смотреть →</p>
+              </div>
+            </Link>
+          </motion.div>
+        ))}
+      </div>
+    </>
+  );
+}
 
 function IndexPage() {
   const { data } = useSuspenseQuery(homeQuery);
@@ -69,12 +151,12 @@ function IndexPage() {
               Самая низкая цена{" "}
               <span className="bg-gradient-to-r from-primary to-emerald-500 bg-clip-text text-transparent">
                 на продукты
-              </span>{" "}
-              за 1 клик
+              </span>
+              {" "}за 1 клик
             </h1>
             <p className="mx-auto mt-4 max-w-2xl text-balance text-base text-muted-foreground sm:text-lg">
-              Ценомер сравнивает цены в крупнейших супермаркетах Москвы и области. Найдите выгодное
-              предложение мгновенно.
+              Ценомер сравнивает цены в крупнейших супермаркетах Москвы и области.
+              Найдите выгодное предложение мгновенно.
             </p>
           </motion.div>
 
@@ -148,35 +230,9 @@ function IndexPage() {
         </section>
       )}
 
-      {/* Категории */}
+      {/* ✅ FIX 4.4: Персонализированные / Популярные категории */}
       <section className="mx-auto max-w-7xl px-4 pb-20">
-        <h2 className="mb-5 font-display text-2xl font-bold tracking-tight sm:text-3xl">
-          Популярные категории
-        </h2>
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
-          {data.categories.map((c, i) => (
-            <motion.div
-              key={c.id}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.04 }}
-            >
-              <Link
-                to="/search"
-                search={{ category: c.slug }}
-                className="group flex items-center gap-3 rounded-2xl border border-border bg-card p-4 shadow-soft transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-lift"
-              >
-                <span className="text-3xl">{c.icon}</span>
-                <div>
-                  <p className="font-medium leading-tight">{c.name}</p>
-                  <p className="text-xs text-muted-foreground group-hover:text-primary">
-                    Смотреть →
-                  </p>
-                </div>
-              </Link>
-            </motion.div>
-          ))}
-        </div>
+        <PersonalizedCategories allCategories={data.categories} />
       </section>
 
       <footer className="border-t border-border bg-card/40">

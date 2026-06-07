@@ -7,12 +7,22 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useState, Suspense, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
-import { AuthProvider } from "@/lib/auth-context";
+import { AuthProvider, useAuth } from "@/lib/auth-context";
 import { Toaster } from "sonner";
+import { usePushNotifications } from "@/hooks/use-push-notifications";
+import { useNativePlatform } from "@/hooks/use-native";
+import { useOffline, registerServiceWorker } from "@/hooks/use-offline";
+import { OfflineBanner } from "@/components/OfflineBanner";
+import { UpdateBanner } from "@/components/UpdateBanner";
+import { Onboarding, useOnboarding } from "@/components/Onboarding";
+import { PullIndicator } from "@/hooks/use-pull-to-refresh";
+import { useQueryClient } from "@tanstack/react-query";
+import { BottomNav } from "@/components/BottomNav";
+import { ThemeProvider } from "@/lib/theme";
 
 function NotFoundComponent() {
   return (
@@ -20,7 +30,9 @@ function NotFoundComponent() {
       <div className="max-w-md text-center">
         <h1 className="font-display text-7xl font-bold text-foreground">404</h1>
         <h2 className="mt-4 text-xl font-semibold">Страница не найдена</h2>
-        <p className="mt-2 text-sm text-muted-foreground">Похоже, такой страницы у нас нет.</p>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Похоже, такой страницы у нас нет.
+        </p>
         <Link
           to="/"
           className="mt-6 inline-flex items-center justify-center rounded-xl bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition hover:opacity-90"
@@ -72,7 +84,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   head: () => ({
     meta: [
       { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1" },
+      { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
+      { name: "apple-mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-status-bar-style", content: "default" },
+      { name: "apple-mobile-web-app-title", content: "Ценомер" },
+      { name: "theme-color", content: "#fafaf9" },
+      { name: "mobile-web-app-capable", content: "yes" },
       { title: "Ценомер — лучший агрегатор цен на продукты в Москве" },
       {
         name: "description",
@@ -81,46 +98,15 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
       { name: "theme-color", content: "#16a34a" },
       { property: "og:title", content: "Ценомер — лучший агрегатор цен на продукты в Москве" },
-      {
-        property: "og:description",
-        content:
-          "Сравнивайте цены на продукты в Перекрёстке, Пятёрочке, Магните и Ленте. Самая низкая цена за 1 клик.",
-      },
+      { property: "og:description", content: "Сравнивайте цены на продукты в Перекрёстке, Пятёрочке, Магните и Ленте. Самая низкая цена за 1 клик." },
       { property: "og:type", content: "website" },
       { name: "twitter:title", content: "Ценомер — лучший агрегатор цен на продукты в Москве" },
-      {
-        name: "twitter:description",
-        content:
-          "Сравнивайте цены на продукты в Перекрёстке, Пятёрочке, Магните и Ленте. Самая низкая цена за 1 клик.",
-      },
-      {
-        property: "og:image",
-        content:
-          "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/49843427-29d8-44a5-b271-212947784cb7/id-preview-8a130d09--22797235-15ac-4a59-a761-e73fc6a8b1da.lovable.app-1780521032001.png",
-      },
-      {
-        name: "twitter:image",
-        content:
-          "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/49843427-29d8-44a5-b271-212947784cb7/id-preview-8a130d09--22797235-15ac-4a59-a761-e73fc6a8b1da.lovable.app-1780521032001.png",
-      },
+      { name: "twitter:description", content: "Сравнивайте цены на продукты в Перекрёстке, Пятёрочке, Магните и Ленте. Самая низкая цена за 1 клик." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/49843427-29d8-44a5-b271-212947784cb7/id-preview-8a130d09--22797235-15ac-4a59-a761-e73fc6a8b1da.lovable.app-1780521032001.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/49843427-29d8-44a5-b271-212947784cb7/id-preview-8a130d09--22797235-15ac-4a59-a761-e73fc6a8b1da.lovable.app-1780521032001.png" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "mobile-web-app-capable", content: "yes" },
-      { name: "apple-mobile-web-app-capable", content: "yes" },
-      { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
-      { name: "apple-mobile-web-app-title", content: "Ценомер" },
     ],
-    links: [
-      { rel: "stylesheet", href: appCss },
-      { rel: "manifest", href: "/manifest.json" },
-      {
-        rel: "apple-touch-icon",
-        href: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect fill='%2316a34a' width='180' height='180' rx='40'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-size='90' font-weight='bold' fill='white' font-family='system-ui'>₽</text></svg>",
-      },
-      {
-        rel: "icon",
-        href: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect fill='%2316a34a' width='32' height='32' rx='6'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-size='18' font-weight='bold' fill='white' font-family='system-ui'>₽</text></svg>",
-      },
-    ],
+    links: [{ rel: "stylesheet", href: appCss }],
   }),
   shellComponent: RootShell,
   component: RootComponent,
@@ -142,24 +128,91 @@ function RootShell({ children }: { children: ReactNode }) {
   );
 }
 
-function RootComponent() {
-  const { queryClient } = Route.useRouteContext();
+function AppInner() {
+  const { user } = useAuth();
+  const { isIos } = useNativePlatform();
+  usePushNotifications(user);
 
+  // Регистрируем Service Worker для офлайн-поддержки
+  useEffect(() => { registerServiceWorker(); }, []);
+
+  // Обрабатываем реферальный код из URL при первом открытии
   useEffect(() => {
-    // Register service worker for PWA support
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("/sw.js").catch(() => {
-        console.info("Service worker registration failed (offline mode unavailable)");
-      });
+    const params = new URLSearchParams(window.location.search);
+    const ref = params.get("ref");
+    if (ref) {
+      localStorage.setItem("cenomer-pending-ref", ref.toUpperCase());
+      // Убираем из URL без перезагрузки
+      const clean = window.location.pathname;
+      window.history.replaceState({}, "", clean);
     }
   }, []);
 
+  const showOnboarding = useOnboarding();
+  const [onboardingDone, setOnboardingDone] = useState(!showOnboarding);
+  const queryClient = useQueryClient();
+  const [pulling, setPulling] = useState(false);
+  const [pullProgress, setPullProgress] = useState(0);
+
+  useEffect(() => {
+    // Pull-to-refresh
+    let startY: number | null = null;
+    const THRESHOLD = 70;
+
+    function onTouchStart(e: TouchEvent) {
+      if (window.scrollY === 0) startY = e.touches[0].clientY;
+    }
+    function onTouchMove(e: TouchEvent) {
+      if (startY === null || window.scrollY > 0) return;
+      const delta = e.touches[0].clientY - startY;
+      if (delta <= 0) return;
+      setPullProgress(Math.min(delta / THRESHOLD, 1));
+      setPulling(true);
+    }
+    async function onTouchEnd() {
+      if (pullProgress >= 1) {
+        await queryClient.invalidateQueries();
+      }
+      startY = null;
+      setPulling(false);
+      setPullProgress(0);
+    }
+    document.addEventListener("touchstart", onTouchStart, { passive: true });
+    document.addEventListener("touchmove", onTouchMove, { passive: true });
+    document.addEventListener("touchend", onTouchEnd);
+    return () => {
+      document.removeEventListener("touchstart", onTouchStart);
+      document.removeEventListener("touchmove", onTouchMove);
+      document.removeEventListener("touchend", onTouchEnd);
+    };
+  }, [pullProgress, queryClient]);
+
+  if (!onboardingDone) return <Onboarding onDone={() => setOnboardingDone(true)} />;
+
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
+    <>
+      <OfflineBanner />
+      <PullIndicator progress={pullProgress} pulling={pulling} />
+      {isIos && <div className="h-[env(safe-area-inset-top)] bg-background" />}
+      <div className="pb-16 lg:pb-0">
         <Outlet />
-        <Toaster position="top-center" richColors closeButton />
-      </AuthProvider>
-    </QueryClientProvider>
+      </div>
+      <BottomNav />
+      <UpdateBanner />
+      <Toaster position="top-center" richColors closeButton />
+    </>
+  );
+}
+
+function RootComponent() {
+  const { queryClient } = Route.useRouteContext();
+  return (
+    <ThemeProvider>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <AppInner />
+        </AuthProvider>
+      </QueryClientProvider>
+    </ThemeProvider>
   );
 }

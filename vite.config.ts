@@ -5,9 +5,6 @@
 //     error logger plugins, and sandbox detection (port/host/strictPort).
 // You can pass additional config via defineConfig({ vite: { ... }, etc... }) if needed.
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
-import { visualizer } from "rollup-plugin-visualizer";
-
-const analyze = !!process.env.ANALYZE;
 
 export default defineConfig({
   tanstackStart: {
@@ -15,24 +12,10 @@ export default defineConfig({
     // nitro/vite builds from this
     server: { entry: "server" },
   },
+  // ✅ FIX 1.4: CACHE_VERSION в sw.js заменяется уникальным значением при каждом деплое
   vite: {
-    build: {
-      rollupOptions: {
-        output: {
-          manualChunks(id: string) {
-            if (id.includes("node_modules")) {
-              if (id.includes("react")) return "vendor.react";
-              if (id.includes("framer-motion")) return "vendor.motion";
-              if (id.includes("@tanstack")) return "vendor.tanstack";
-              if (id.includes("@supabase")) return "vendor.supabase";
-              if (id.includes("lucide-react")) return "vendor.icons";
-              return "vendor";
-            }
-          },
-        },
-      },
-      chunkSizeWarningLimit: 600,
+    define: {
+      __APP_VERSION__: JSON.stringify(`cenomer-${Date.now()}`),
     },
-    plugins: analyze ? [visualizer({ filename: "dist/stats.html", open: false })] : [],
   },
 });
