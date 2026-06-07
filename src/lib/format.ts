@@ -14,7 +14,10 @@ export function formatPercent(value: number): string {
   return `−${Math.round(value)}%`;
 }
 
-export function discountPercent(oldPrice: number | string | null | undefined, price: number | string): number | null {
+export function discountPercent(
+  oldPrice: number | string | null | undefined,
+  price: number | string,
+): number | null {
   if (oldPrice == null) return null;
   const o = typeof oldPrice === "string" ? parseFloat(oldPrice) : oldPrice;
   const p = typeof price === "string" ? parseFloat(price) : price;

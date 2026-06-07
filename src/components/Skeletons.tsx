@@ -1,9 +1,7 @@
 import { cn } from "@/lib/utils";
 
 function Skeleton({ className }: { className?: string }) {
-  return (
-    <div className={cn("animate-pulse rounded-lg bg-muted", className)} />
-  );
+  return <div className={cn("animate-pulse rounded-lg bg-muted", className)} />;
 }
 
 // Карточка товара
@@ -85,7 +83,9 @@ export function HomePageSkeleton() {
       <div>
         <Skeleton className="mb-5 h-8 w-48" />
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          {[1,2,3,4].map(i => <Skeleton key={i} className="h-20 rounded-2xl" />)}
+          {[1, 2, 3, 4].map((i) => (
+            <Skeleton key={i} className="h-20 rounded-2xl" />
+          ))}
         </div>
       </div>
     </div>

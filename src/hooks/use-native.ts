@@ -5,15 +5,28 @@
  */
 import { useEffect, useState } from "react";
 
+interface CapacitorGlobal {
+  isNativePlatform?: () => boolean;
+  getPlatform?: () => "ios" | "android" | "web";
+}
+
+interface WindowWithCapacitor extends Window {
+  Capacitor?: CapacitorGlobal;
+}
+
+function getCapacitorWindow(): WindowWithCapacitor {
+  return window as WindowWithCapacitor;
+}
+
 // Определяем, запущено ли приложение нативно (iOS/Android)
 export function isNative(): boolean {
-  return typeof (window as any).Capacitor !== "undefined" &&
-    (window as any).Capacitor?.isNativePlatform?.() === true;
+  const capacitor = getCapacitorWindow().Capacitor;
+  return typeof capacitor !== "undefined" && capacitor?.isNativePlatform?.() === true;
 }
 
 export function getPlatform(): "ios" | "android" | "web" {
   if (!isNative()) return "web";
-  return (window as any).Capacitor?.getPlatform?.() ?? "web";
+  return getCapacitorWindow().Capacitor?.getPlatform?.() ?? "web";
 }
 
 // ── Haptics (тактильная отдача) ────────────────────────────────────────────
@@ -22,7 +35,9 @@ export async function hapticLight() {
   try {
     const { Haptics, ImpactStyle } = await import("@capacitor/haptics");
     await Haptics.impact({ style: ImpactStyle.Light });
-  } catch {}
+  } catch {
+    /* Capacitor plugin unavailable */
+  }
 }
 
 export async function hapticSuccess() {
@@ -30,7 +45,9 @@ export async function hapticSuccess() {
   try {
     const { Haptics, NotificationType } = await import("@capacitor/haptics");
     await Haptics.notification({ type: NotificationType.Success });
-  } catch {}
+  } catch {
+    /* Capacitor plugin unavailable */
+  }
 }
 
 export async function hapticMedium() {
@@ -38,7 +55,9 @@ export async function hapticMedium() {
   try {
     const { Haptics, ImpactStyle } = await import("@capacitor/haptics");
     await Haptics.impact({ style: ImpactStyle.Medium });
-  } catch {}
+  } catch {
+    /* Capacitor plugin unavailable */
+  }
 }
 
 // ── StatusBar ──────────────────────────────────────────────────────────────
@@ -48,7 +67,9 @@ export async function setStatusBarLight() {
     const { StatusBar, Style } = await import("@capacitor/status-bar");
     await StatusBar.setStyle({ style: Style.Light });
     await StatusBar.setBackgroundColor({ color: "#fafaf9" });
-  } catch {}
+  } catch {
+    /* Capacitor plugin unavailable */
+  }
 }
 
 export async function setStatusBarDark() {
@@ -57,7 +78,9 @@ export async function setStatusBarDark() {
     const { StatusBar, Style } = await import("@capacitor/status-bar");
     await StatusBar.setStyle({ style: Style.Dark });
     await StatusBar.setBackgroundColor({ color: "#1a1a1a" });
-  } catch {}
+  } catch {
+    /* Capacitor plugin unavailable */
+  }
 }
 
 // ── Push Notifications ─────────────────────────────────────────────────────
@@ -104,7 +127,9 @@ export async function shareProduct(name: string, url: string) {
       url,
       dialogTitle: "Поделиться товаром",
     });
-  } catch {}
+  } catch {
+    /* Capacitor plugin unavailable */
+  }
 }
 
 // ── Хук: платформа + safe-area insets ─────────────────────────────────────

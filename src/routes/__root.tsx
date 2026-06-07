@@ -30,9 +30,7 @@ function NotFoundComponent() {
       <div className="max-w-md text-center">
         <h1 className="font-display text-7xl font-bold text-foreground">404</h1>
         <h2 className="mt-4 text-xl font-semibold">Страница не найдена</h2>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Похоже, такой страницы у нас нет.
-        </p>
+        <p className="mt-2 text-sm text-muted-foreground">Похоже, такой страницы у нас нет.</p>
         <Link
           to="/"
           className="mt-6 inline-flex items-center justify-center rounded-xl bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition hover:opacity-90"
@@ -98,12 +96,28 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
       { name: "theme-color", content: "#16a34a" },
       { property: "og:title", content: "Ценомер — лучший агрегатор цен на продукты в Москве" },
-      { property: "og:description", content: "Сравнивайте цены на продукты в Перекрёстке, Пятёрочке, Магните и Ленте. Самая низкая цена за 1 клик." },
+      {
+        property: "og:description",
+        content:
+          "Сравнивайте цены на продукты в Перекрёстке, Пятёрочке, Магните и Ленте. Самая низкая цена за 1 клик.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:title", content: "Ценомер — лучший агрегатор цен на продукты в Москве" },
-      { name: "twitter:description", content: "Сравнивайте цены на продукты в Перекрёстке, Пятёрочке, Магните и Ленте. Самая низкая цена за 1 клик." },
-      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/49843427-29d8-44a5-b271-212947784cb7/id-preview-8a130d09--22797235-15ac-4a59-a761-e73fc6a8b1da.lovable.app-1780521032001.png" },
-      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/49843427-29d8-44a5-b271-212947784cb7/id-preview-8a130d09--22797235-15ac-4a59-a761-e73fc6a8b1da.lovable.app-1780521032001.png" },
+      {
+        name: "twitter:description",
+        content:
+          "Сравнивайте цены на продукты в Перекрёстке, Пятёрочке, Магните и Ленте. Самая низкая цена за 1 клик.",
+      },
+      {
+        property: "og:image",
+        content:
+          "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/49843427-29d8-44a5-b271-212947784cb7/id-preview-8a130d09--22797235-15ac-4a59-a761-e73fc6a8b1da.lovable.app-1780521032001.png",
+      },
+      {
+        name: "twitter:image",
+        content:
+          "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/49843427-29d8-44a5-b271-212947784cb7/id-preview-8a130d09--22797235-15ac-4a59-a761-e73fc6a8b1da.lovable.app-1780521032001.png",
+      },
       { name: "twitter:card", content: "summary_large_image" },
     ],
     links: [{ rel: "stylesheet", href: appCss }],
@@ -134,7 +148,9 @@ function AppInner() {
   usePushNotifications(user);
 
   // Регистрируем Service Worker для офлайн-поддержки
-  useEffect(() => { registerServiceWorker(); }, []);
+  useEffect(() => {
+    registerServiceWorker();
+  }, []);
 
   // Обрабатываем реферальный код из URL при первом открытии
   useEffect(() => {

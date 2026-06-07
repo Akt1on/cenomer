@@ -5,14 +5,18 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { createClient } from "@supabase/supabase-js";
 
-export const Route = createFileRoute("/sitemap[.]xml")({
+type SitemapPage = {
+  loc: string;
+  changefreq: string;
+  priority: string;
+  lastmod?: string;
+};
+
+export const Route = createFileRoute("/sitemap.xml")({
   server: {
     handlers: {
       GET: async () => {
-        const sb = createClient(
-          process.env.SUPABASE_URL!,
-          process.env.SUPABASE_PUBLISHABLE_KEY!,
-        );
+        const sb = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_PUBLISHABLE_KEY!);
 
         const BASE = "https://cenomer.vercel.app"; // ⚠️ поменяй на свой домен
         const now = new Date().toISOString().slice(0, 10);
@@ -23,12 +27,12 @@ export const Route = createFileRoute("/sitemap[.]xml")({
           .order("updated_at", { ascending: false })
           .limit(5000);
 
-        const staticPages = [
+        const staticPages: SitemapPage[] = [
           { loc: `${BASE}/`, changefreq: "daily", priority: "1.0" },
           { loc: `${BASE}/search`, changefreq: "daily", priority: "0.9" },
         ];
 
-        const productPages = (products || []).map((p) => ({
+        const productPages: SitemapPage[] = (products || []).map((p) => ({
           loc: `${BASE}/product/${p.slug}`,
           changefreq: "hourly",
           priority: "0.8",
@@ -39,11 +43,15 @@ export const Route = createFileRoute("/sitemap[.]xml")({
 
         const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${allPages.map((p) => `  <url>
+${allPages
+  .map(
+    (p) => `  <url>
     <loc>${p.loc}</loc>
     <changefreq>${p.changefreq}</changefreq>
-    <priority>${p.priority}</priority>${(p as any).lastmod ? `\n    <lastmod>${(p as any).lastmod}</lastmod>` : ""}
-  </url>`).join("\n")}
+    <priority>${p.priority}</priority>${p.lastmod ? `\n    <lastmod>${p.lastmod}</lastmod>` : ""}
+  </url>`,
+  )
+  .join("\n")}
 </urlset>`;
 
         return new Response(xml, {

@@ -81,13 +81,7 @@ export function usePullToRefresh(onRefresh: () => Promise<void>) {
 }
 
 // Индикатор pull-to-refresh
-export function PullIndicator({
-  progress,
-  pulling,
-}: {
-  progress: number;
-  pulling: boolean;
-}) {
+export function PullIndicator({ progress, pulling }: { progress: number; pulling: boolean }) {
   if (!pulling) return null;
   return (
     <div

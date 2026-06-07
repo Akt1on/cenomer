@@ -27,7 +27,10 @@ export function UpdateBanner() {
           </div>
           <div className="flex gap-1">
             <button
-              onClick={() => { hapticSuccess(); apply(); }}
+              onClick={() => {
+                hapticSuccess();
+                apply();
+              }}
               className="rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground transition hover:opacity-90"
             >
               Обновить

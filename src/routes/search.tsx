@@ -30,10 +30,25 @@ export const Route = createFileRoute("/search")({
       }),
     ),
   head: () => ({
-    meta: [{ title: "Поиск — Ценомер" }, { name: "description", content: "Сравнение цен на продукты" }],
+    meta: [
+      { title: "Поиск — Ценомер" },
+      { name: "description", content: "Сравнение цен на продукты" },
+    ],
   }),
-  component: () => <Suspense fallback={<div className="min-h-screen bg-background p-4 pt-16"><ProductGridSkeleton count={12} /></div>}><SearchPage /></Suspense>,
-  errorComponent: ({ error }) => <div className="p-8 text-center text-destructive">{error.message}</div>,
+  component: () => (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-background p-4 pt-16">
+          <ProductGridSkeleton count={12} />
+        </div>
+      }
+    >
+      <SearchPage />
+    </Suspense>
+  ),
+  errorComponent: ({ error }) => (
+    <div className="p-8 text-center text-destructive">{error.message}</div>
+  ),
 });
 
 function SearchPage() {
@@ -54,7 +69,8 @@ function SearchPage() {
 
   const { data: cats } = useQuery({
     queryKey: ["categories"],
-    queryFn: async () => (await supabase.from("categories").select("*").order("sort_order")).data ?? [],
+    queryFn: async () =>
+      (await supabase.from("categories").select("*").order("sort_order")).data ?? [],
     staleTime: 5 * 60_000,
   });
 
@@ -161,8 +177,13 @@ function SearchPage() {
             {data.products.length === 0 ? (
               <div className="rounded-2xl border border-dashed border-border bg-card p-10 text-center">
                 <p className="text-lg font-semibold">Ничего не нашли</p>
-                <p className="mt-1 text-sm text-muted-foreground">Попробуйте изменить запрос или фильтры.</p>
-                <Link to="/" className="mt-4 inline-block text-sm font-medium text-primary hover:underline">
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Попробуйте изменить запрос или фильтры.
+                </p>
+                <Link
+                  to="/"
+                  className="mt-4 inline-block text-sm font-medium text-primary hover:underline"
+                >
                   ← На главную
                 </Link>
               </div>
@@ -178,7 +199,9 @@ function SearchPage() {
                       </div>
                     </div>
                   )}
-                  <div className={`grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 xl:grid-cols-4 transition-opacity ${isFetching ? "opacity-60" : "opacity-100"}`}>
+                  <div
+                    className={`grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 xl:grid-cols-4 transition-opacity ${isFetching ? "opacity-60" : "opacity-100"}`}
+                  >
                     {data.products.map((p, i) => (
                       <ProductCard key={p.id} product={p} index={i} cartIds={cartIds} />
                     ))}
@@ -198,7 +221,9 @@ function SearchPage() {
 
                     <div className="flex items-center gap-1">
                       {Array.from({ length: totalPages }, (_, i) => i + 1)
-                        .filter((p) => p === 1 || p === totalPages || Math.abs(p - currentPage) <= 1)
+                        .filter(
+                          (p) => p === 1 || p === totalPages || Math.abs(p - currentPage) <= 1,
+                        )
                         .reduce<(number | "...")[]>((acc, p, idx, arr) => {
                           if (idx > 0 && p - (arr[idx - 1] as number) > 1) acc.push("...");
                           acc.push(p);
@@ -206,7 +231,9 @@ function SearchPage() {
                         }, [])
                         .map((p, i) =>
                           p === "..." ? (
-                            <span key={`ellipsis-${i}`} className="px-2 text-muted-foreground">…</span>
+                            <span key={`ellipsis-${i}`} className="px-2 text-muted-foreground">
+                              …
+                            </span>
                           ) : (
                             <button
                               key={p}

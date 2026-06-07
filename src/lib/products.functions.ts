@@ -16,8 +16,7 @@ let _sbInstance: SupabaseClient<Database> | null = null;
 function getServerSupabase(): SupabaseClient<Database> {
   if (_sbInstance) return _sbInstance;
   const url = process.env.SUPABASE_URL || import.meta.env.VITE_SUPABASE_URL;
-  const key =
-    process.env.SUPABASE_PUBLISHABLE_KEY || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+  const key = process.env.SUPABASE_PUBLISHABLE_KEY || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
   if (!url || !key) throw new Error("Supabase env vars are not set");
   _sbInstance = createClient<Database>(url, key, {
     auth: { persistSession: false, autoRefreshToken: false },
@@ -53,8 +52,63 @@ export type ProductWithOffers = {
   max_price: number | null;
 };
 
+type ProductRow = Database["public"]["Tables"]["products"]["Row"];
+type CategoryRow = Database["public"]["Tables"]["categories"]["Row"];
+type StoreRow = Database["public"]["Tables"]["stores"]["Row"];
+
+type JoinedStoreProduct = {
+  price: number;
+  old_price: number | null;
+  is_promo: boolean;
+  store_product_url: string | null;
+  store_id: string;
+  stores: Pick<StoreRow, "id" | "slug" | "name" | "brand_color"> | null;
+};
+
+type ProductWithRelations = ProductRow & {
+  categories: Pick<CategoryRow, "id" | "name" | "slug"> | null;
+  store_products: JoinedStoreProduct[];
+};
+
+type IlikeCapable<T> = {
+  ilike(column: string, pattern: string): T;
+};
+
+function mapProductWithRelations(p: ProductWithRelations): ProductWithOffers {
+  const cat = p.categories;
+  const productOffers: StoreOffer[] = (p.store_products || [])
+    .filter((sp) => sp.stores)
+    .map((sp) => ({
+      store_id: sp.store_id,
+      store_slug: sp.stores?.slug ?? "",
+      store_name: sp.stores?.name ?? "",
+      brand_color: sp.stores?.brand_color ?? null,
+      price: Number(sp.price),
+      old_price: sp.old_price != null ? Number(sp.old_price) : null,
+      is_promo: sp.is_promo,
+      store_product_url: sp.store_product_url,
+    }))
+    .sort((a, b) => a.price - b.price);
+
+  const prices = productOffers.map((o) => o.price);
+  return {
+    id: p.id,
+    slug: p.slug,
+    name: p.name,
+    brand: p.brand,
+    volume: p.volume,
+    image_url: p.image_url,
+    category_id: p.category_id,
+    category_name: cat?.name ?? null,
+    category_slug: cat?.slug ?? null,
+    offers: productOffers,
+    best_price: prices.length ? Math.min(...prices) : null,
+    max_price: prices.length ? Math.max(...prices) : null,
+  };
+}
+
 // ── attachOffers: batch-вариант для getProductBySlug / getHomeData ─────────
-async function attachOffers(productRows: any[]): Promise<ProductWithOffers[]> {
+async function attachOffers(productRows: ProductRow[]): Promise<ProductWithOffers[]> {
   if (productRows.length === 0) return [];
   const sb = getServerSupabase();
   const ids = productRows.map((p) => p.id);
@@ -101,7 +155,7 @@ async function attachOffers(productRows: any[]): Promise<ProductWithOffers[]> {
   });
 }
 
-function applyTextSearch(query: any, q: string) {
+function applyTextSearch<T extends IlikeCapable<T>>(query: T, q: string): T {
   return query.ilike("search_text", `%${q.trim().toLowerCase()}%`);
 }
 
@@ -125,7 +179,7 @@ export const searchProducts = createServerFn({ method: "GET" })
           sort: z.enum(["price", "discount", "name"]).optional(),
           page: z.number().int().min(1).optional(),
         })
-        .parse(input)
+        .parse(input),
   )
   .handler(async ({ data }) => {
     const sb = getServerSupabase();
@@ -136,18 +190,20 @@ export const searchProducts = createServerFn({ method: "GET" })
     // ✅ FIX 4.1: логируем поисковый запрос в search_stats (fire-and-forget)
     if (data.q?.trim()) {
       const q = data.q.trim().toLowerCase();
-      sb.from("search_stats" as any)
-        .upsert({ query: q, count: 1, updated_at: new Date().toISOString() }, {
-          onConflict: "query",
-          ignoreDuplicates: false,
-        })
-        // Supabase не поддерживает INCREMENT в upsert — используем RPC если есть,
-        // иначе просто insert с on conflict update через raw SQL через rpc
-        .then(() => {
-          // Пробуем инкремент через отдельный update (best-effort)
-          sb.rpc("increment_search_stat" as any, { search_query: q }).catch(() => {});
-        })
-        .catch(() => {}); // fire-and-forget, не блокируем ответ
+      void (async () => {
+        try {
+          await sb.from("search_stats").upsert(
+            { query: q, count: 1, updated_at: new Date().toISOString() },
+            {
+              onConflict: "query",
+              ignoreDuplicates: false,
+            },
+          );
+          await sb.rpc("increment_search_stat", { search_query: q });
+        } catch {
+          /* fire-and-forget */
+        }
+      })();
     }
 
     let query = sb
@@ -161,7 +217,7 @@ export const searchProducts = createServerFn({ method: "GET" })
           stores(id, slug, name, brand_color)
         )
       `,
-        { count: "exact" }
+        { count: "exact" },
       )
       .range(from, to);
 
@@ -195,7 +251,7 @@ export const searchProducts = createServerFn({ method: "GET" })
           .select("id")
           .ilike("search_text", `%${data.q.trim().toLowerCase()}%`);
         if (matchingIds) {
-          const ids = matchingIds.map((r: any) => r.id);
+          const ids = matchingIds.map((r) => r.id);
           countQ = countQ.in("product_id", ids);
         }
       }
@@ -206,38 +262,9 @@ export const searchProducts = createServerFn({ method: "GET" })
     const { data: rows, error, count } = await query;
     if (error) throw new Error(error.message);
 
-    const products: ProductWithOffers[] = (rows || []).map((p: any) => {
-      const cat = p.categories;
-      const productOffers: StoreOffer[] = (p.store_products || [])
-        .filter((sp: any) => sp.stores)
-        .map((sp: any) => ({
-          store_id: sp.store_id,
-          store_slug: sp.stores?.slug ?? "",
-          store_name: sp.stores?.name ?? "",
-          brand_color: sp.stores?.brand_color ?? null,
-          price: Number(sp.price),
-          old_price: sp.old_price != null ? Number(sp.old_price) : null,
-          is_promo: sp.is_promo,
-          store_product_url: sp.store_product_url,
-        }))
-        .sort((a: StoreOffer, b: StoreOffer) => a.price - b.price);
-
-      const prices = productOffers.map((o) => o.price);
-      return {
-        id: p.id,
-        slug: p.slug,
-        name: p.name,
-        brand: p.brand,
-        volume: p.volume,
-        image_url: p.image_url,
-        category_id: p.category_id,
-        category_name: cat?.name ?? null,
-        category_slug: cat?.slug ?? null,
-        offers: productOffers,
-        best_price: prices.length ? Math.min(...prices) : null,
-        max_price: prices.length ? Math.max(...prices) : null,
-      };
-    });
+    const products: ProductWithOffers[] = (rows || []).map((p) =>
+      mapProductWithRelations(p as ProductWithRelations),
+    );
 
     const sort = data.sort ?? "price";
     products.sort((a, b) => {
@@ -250,7 +277,12 @@ export const searchProducts = createServerFn({ method: "GET" })
       return a.name.localeCompare(b.name, "ru");
     });
 
-    return { products, total: (data.promoOnly ? exactCount : count) ?? 0, page, pageSize: PAGE_SIZE };
+    return {
+      products,
+      total: (data.promoOnly ? exactCount : count) ?? 0,
+      page,
+      pageSize: PAGE_SIZE,
+    };
   });
 
 export const getProductBySlug = createServerFn({ method: "GET" })
@@ -297,12 +329,15 @@ export const getHomeData = createServerFn({ method: "GET" }).handler(async () =>
   const promoIds = [...new Set((promoStoreProducts || []).map((r) => r.product_id))];
 
   // Промо-товары
-  const promoProductRows = promoIds.length > 0
-    ? (await sb.from("products").select("*").in("id", promoIds.slice(0, 20))).data ?? []
-    : [];
+  const promoProductRows =
+    promoIds.length > 0
+      ? ((await sb.from("products").select("*").in("id", promoIds.slice(0, 20))).data ?? [])
+      : [];
 
   // ✅ FIX 3.2: собираем все уникальные id и вызываем attachOffers ОДИН раз
-  const allProductIds = [...new Set([...promoIds.slice(0, 20), ...(allProductRows || []).map((p) => p.id)])];
+  const allProductIds = [
+    ...new Set([...promoIds.slice(0, 20), ...(allProductRows || []).map((p) => p.id)]),
+  ];
   const allRows = [
     ...promoProductRows,
     ...(allProductRows || []).filter((p) => !promoIds.includes(p.id)),
@@ -348,8 +383,8 @@ export const autocompleteProducts = createServerFn({ method: "GET" })
 export const getTopSearches = createServerFn({ method: "GET" }).handler(async () => {
   const sb = getServerSupabase();
   try {
-    const { data } = await sb.rpc("get_top_searches" as any, { lim: 8 });
-    return { queries: (data as any[] ?? []).map((r: any) => r.query as string) };
+    const { data } = await sb.rpc("get_top_searches", { lim: 8 });
+    return { queries: (data ?? []).map((r) => r.query) };
   } catch {
     return { queries: [] };
   }
@@ -360,7 +395,7 @@ export const getTopSearches = createServerFn({ method: "GET" }).handler(async ()
 // Заменяет 3 параллельных клиентских запроса в favorites.tsx.
 export const getFavoriteProducts = createServerFn({ method: "GET" })
   .inputValidator((input: { ids: string[] }) =>
-    z.object({ ids: z.array(z.string().uuid()) }).parse(input)
+    z.object({ ids: z.array(z.string().uuid()) }).parse(input),
   )
   .handler(async ({ data }) => {
     if (data.ids.length === 0) return { products: [], alerts: [] };
@@ -375,38 +410,15 @@ export const getFavoriteProducts = createServerFn({ method: "GET" })
          store_products(
            price, old_price, is_promo, store_product_url, store_id,
            stores(id, slug, name, brand_color)
-         )`
+         )`,
       )
       .in("id", data.ids);
 
     if (error) throw new Error(error.message);
 
-    const products: ProductWithOffers[] = (rows || []).map((p: any) => {
-      const cat = p.categories;
-      const productOffers: StoreOffer[] = (p.store_products || [])
-        .filter((sp: any) => sp.stores)
-        .map((sp: any) => ({
-          store_id: sp.store_id,
-          store_slug: sp.stores?.slug ?? "",
-          store_name: sp.stores?.name ?? "",
-          brand_color: sp.stores?.brand_color ?? null,
-          price: Number(sp.price),
-          old_price: sp.old_price != null ? Number(sp.old_price) : null,
-          is_promo: sp.is_promo,
-          store_product_url: sp.store_product_url,
-        }))
-        .sort((a: StoreOffer, b: StoreOffer) => a.price - b.price);
-
-      const prices = productOffers.map((o) => o.price);
-      return {
-        id: p.id, slug: p.slug, name: p.name, brand: p.brand, volume: p.volume,
-        image_url: p.image_url, category_id: p.category_id,
-        category_name: cat?.name ?? null, category_slug: cat?.slug ?? null,
-        offers: productOffers,
-        best_price: prices.length ? Math.min(...prices) : null,
-        max_price: prices.length ? Math.max(...prices) : null,
-      };
-    });
+    const products: ProductWithOffers[] = (rows || []).map((p) =>
+      mapProductWithRelations(p as ProductWithRelations),
+    );
 
     return { products };
   });

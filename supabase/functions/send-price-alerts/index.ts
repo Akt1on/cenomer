@@ -17,7 +17,33 @@ const supabase = createClient(
 
 const FCM_KEY = Deno.env.get("FCM_SERVER_KEY");
 
-async function sendFcmPush(token: string, title: string, body: string, data?: Record<string, string>) {
+type AlertStoreProduct = {
+  price: number | string;
+  store_id: string;
+  stores: { name: string } | null;
+};
+
+type AlertProduct = {
+  id: string;
+  slug: string;
+  name: string;
+  store_products: AlertStoreProduct[];
+};
+
+type PriceAlertRow = {
+  id: string;
+  user_id: string;
+  target_price: number | string | null;
+  product_id: string;
+  products: AlertProduct | null;
+};
+
+async function sendFcmPush(
+  token: string,
+  title: string,
+  body: string,
+  data?: Record<string, string>,
+) {
   if (!FCM_KEY) {
     console.error("FCM_SERVER_KEY не задан");
     return false;
@@ -48,7 +74,8 @@ Deno.serve(async (req) => {
   // ✅ FIX 2.5: читаем MIN(store_products.price) вместо products.best_price (которого нет в БД)
   const { data: alerts, error } = await supabase
     .from("price_alerts")
-    .select(`
+    .select(
+      `
       id,
       user_id,
       target_price,
@@ -57,7 +84,8 @@ Deno.serve(async (req) => {
         id, slug, name,
         store_products!inner(price, store_id, stores(name))
       )
-    `)
+    `,
+    )
     .eq("is_active", true);
 
   if (error) return new Response(error.message, { status: 500 });
@@ -65,12 +93,12 @@ Deno.serve(async (req) => {
   let sent = 0;
   let deactivated = 0;
 
-  for (const alert of alerts ?? []) {
-    const product = (alert as any).products;
+  for (const alert of (alerts ?? []) as PriceAlertRow[]) {
+    const product = alert.products;
     if (!product) continue;
 
     // Вычисляем актуальную минимальную цену из store_products
-    const storePrices: number[] = (product.store_products ?? []).map((sp: any) => Number(sp.price));
+    const storePrices: number[] = (product.store_products ?? []).map((sp) => Number(sp.price));
     if (storePrices.length === 0) continue;
     const currentPrice = Math.min(...storePrices);
 
@@ -107,9 +135,7 @@ Deno.serve(async (req) => {
     for (const { token } of tokens ?? []) {
       const title = isHistoricalMin ? "📉 Исторический минимум!" : "📉 Цена упала!";
       const baseBody = `${product.name} теперь стоит ${currentPrice} ₽`;
-      const body = isHistoricalMin
-        ? `${baseBody} — исторический минимум за 30 дней!`
-        : baseBody;
+      const body = isHistoricalMin ? `${baseBody} — исторический минимум за 30 дней!` : baseBody;
 
       const ok = await sendFcmPush(token, title, body, {
         product_slug: product.slug,
@@ -121,15 +147,11 @@ Deno.serve(async (req) => {
     }
 
     // Деактивируем алерт чтобы не спамить
-    await supabase
-      .from("price_alerts")
-      .update({ is_active: false })
-      .eq("id", alert.id);
+    await supabase.from("price_alerts").update({ is_active: false }).eq("id", alert.id);
     deactivated++;
   }
 
-  return new Response(
-    JSON.stringify({ ok: true, sent, deactivated }),
-    { headers: { "Content-Type": "application/json" } },
-  );
+  return new Response(JSON.stringify({ ok: true, sent, deactivated }), {
+    headers: { "Content-Type": "application/json" },
+  });
 });

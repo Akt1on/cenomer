@@ -36,6 +36,9 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { getServerSupabase } from "@/lib/supabase-server";
 import { formatRub } from "@/lib/format";
 import { shareProduct, hapticLight } from "@/hooks/use-native";
+import type { Database } from "@/integrations/supabase/types";
+
+type CategoryRow = Database["public"]["Tables"]["categories"]["Row"];
 
 const getRatingData = createServerFn({ method: "GET" }).handler(async () => {
   const sb = getServerSupabase();
@@ -62,7 +65,7 @@ const getRatingData = createServerFn({ method: "GET" }).handler(async () => {
   // Для общего рейтинга: взвешенное среднее (сумма средних по категориям / кол-во категорий)
   const storeScores: Record<string, { sum: number; count: number }> = {};
 
-  for (const row of rows as { store_id: string; category_id: string | null; avg_price: number; cnt: number }[]) {
+  for (const row of rows ?? []) {
     const catId = row.category_id ?? "other";
     if (!matrix[catId]) matrix[catId] = {};
     matrix[catId][row.store_id] = Number(row.avg_price);
@@ -75,9 +78,7 @@ const getRatingData = createServerFn({ method: "GET" }).handler(async () => {
   const overall = stores
     .map((s) => ({
       ...s,
-      avg: storeScores[s.id]
-        ? Math.round(storeScores[s.id].sum / storeScores[s.id].count)
-        : null,
+      avg: storeScores[s.id] ? Math.round(storeScores[s.id].sum / storeScores[s.id].count) : null,
     }))
     .filter((s) => s.avg !== null)
     .sort((a, b) => (a.avg ?? 0) - (b.avg ?? 0));
@@ -88,7 +89,7 @@ const getRatingData = createServerFn({ method: "GET" }).handler(async () => {
 export const Route = createFileRoute("/rating")({
   loader: ({ context }) =>
     context.queryClient.ensureQueryData(
-      queryOptions({ queryKey: ["rating"], queryFn: () => getRatingData(), staleTime: 3600_000 })
+      queryOptions({ queryKey: ["rating"], queryFn: () => getRatingData(), staleTime: 3600_000 }),
     ),
   head: () => ({ meta: [{ title: "Рейтинг магазинов — Ценомер" }] }),
   component: () => (
@@ -108,7 +109,7 @@ const MEDALS = ["🥇", "🥈", "🥉"];
 
 function RatingPage() {
   const { data } = useSuspenseQuery(
-    queryOptions({ queryKey: ["rating"], queryFn: () => getRatingData(), staleTime: 3600_000 })
+    queryOptions({ queryKey: ["rating"], queryFn: () => getRatingData(), staleTime: 3600_000 }),
   );
 
   const { stores, categories, matrix, overall } = data;
@@ -121,7 +122,7 @@ function RatingPage() {
       .join("\n");
     await shareProduct(
       `Рейтинг московских магазинов по ценам:\n${text}\n\nПроверь сам →`,
-      `${window.location.origin}/rating`
+      `${window.location.origin}/rating`,
     );
   }
 
@@ -136,7 +137,9 @@ function RatingPage() {
               <BarChart3 className="h-3.5 w-3.5" /> По данным за 30 дней
             </div>
             <h1 className="font-display text-3xl font-bold tracking-tight">Рейтинг магазинов</h1>
-            <p className="mt-1 text-muted-foreground">Где в Москве выгоднее всего покупать продукты</p>
+            <p className="mt-1 text-muted-foreground">
+              Где в Москве выгоднее всего покупать продукты
+            </p>
           </div>
           <button
             onClick={shareRating}
@@ -189,7 +192,9 @@ function RatingPage() {
                       )}
                     </div>
                     <div className="text-right">
-                      <p className={`font-display text-xl font-bold ${isBest ? "text-success" : ""}`}>
+                      <p
+                        className={`font-display text-xl font-bold ${isBest ? "text-success" : ""}`}
+                      >
                         {formatRub(store.avg)}
                       </p>
                       {isBest && (
@@ -234,8 +239,8 @@ function RatingPage() {
                 </thead>
                 <tbody className="divide-y divide-border">
                   {categories
-                    .filter((c: any) => matrix[c.id])
-                    .map((cat: any) => {
+                    .filter((c: CategoryRow) => matrix[c.id])
+                    .map((cat: CategoryRow) => {
                       const row = matrix[cat.id] ?? {};
                       const prices = overall.map((s) => row[s.id]).filter(Boolean);
                       const minPrice = prices.length ? Math.min(...prices) : null;
@@ -251,7 +256,9 @@ function RatingPage() {
                             return (
                               <td key={s.id} className="px-4 py-3 text-center">
                                 {price ? (
-                                  <span className={`text-sm font-semibold ${isBest ? "text-success" : ""}`}>
+                                  <span
+                                    className={`text-sm font-semibold ${isBest ? "text-success" : ""}`}
+                                  >
                                     {isBest && "🏆 "}
                                     {formatRub(price)}
                                   </span>

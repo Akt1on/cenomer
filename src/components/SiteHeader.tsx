@@ -9,9 +9,14 @@ import { useShoppingList } from "@/lib/shopping-list";
 function ThemeToggle() {
   const { resolved, toggle } = useTheme();
   return (
-    <button onClick={() => { toggle(); hapticLight(); }}
+    <button
+      onClick={() => {
+        toggle();
+        hapticLight();
+      }}
       className="grid h-9 w-9 place-items-center rounded-xl border border-border bg-card text-muted-foreground transition hover:bg-muted hover:text-foreground"
-      aria-label="Переключить тему">
+      aria-label="Переключить тему"
+    >
       {resolved === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
     </button>
   );
@@ -30,7 +35,9 @@ export function SiteHeader({ compact = false }: { compact?: boolean }) {
           <div className="grid h-9 w-9 place-items-center rounded-xl bg-primary text-primary-foreground shadow-soft">
             <ShoppingBasket className="h-5 w-5" strokeWidth={2.4} />
           </div>
-          <span className="hidden font-display text-lg font-bold tracking-tight sm:inline">Ценомер</span>
+          <span className="hidden font-display text-lg font-bold tracking-tight sm:inline">
+            Ценомер
+          </span>
         </Link>
 
         {/* Поиск */}
@@ -46,9 +53,11 @@ export function SiteHeader({ compact = false }: { compact?: boolean }) {
           <ThemeToggle />
 
           {/* Корзина со счётчиком */}
-          <Link to="/cart"
+          <Link
+            to="/cart"
             className="relative grid h-9 w-9 place-items-center rounded-xl border border-border bg-card text-muted-foreground transition hover:bg-muted hover:text-foreground"
-            aria-label="Список покупок">
+            aria-label="Список покупок"
+          >
             <ShoppingCart className="h-4 w-4" />
             {count > 0 && (
               <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[9px] font-bold text-primary-foreground">
@@ -58,24 +67,32 @@ export function SiteHeader({ compact = false }: { compact?: boolean }) {
           </Link>
 
           {/* Рейтинг */}
-          <Link to="/rating"
-            className="hidden items-center gap-1.5 rounded-full px-3 py-2 text-sm text-muted-foreground transition hover:bg-muted hover:text-foreground sm:inline-flex">
+          <Link
+            to="/rating"
+            className="hidden items-center gap-1.5 rounded-full px-3 py-2 text-sm text-muted-foreground transition hover:bg-muted hover:text-foreground sm:inline-flex"
+          >
             🏆 Рейтинг
           </Link>
           {/* Реферальная программа */}
-          <Link to="/referral"
-            className="hidden items-center gap-1.5 rounded-full px-3 py-2 text-sm text-muted-foreground transition hover:bg-muted hover:text-foreground sm:inline-flex">
+          <Link
+            to="/referral"
+            className="hidden items-center gap-1.5 rounded-full px-3 py-2 text-sm text-muted-foreground transition hover:bg-muted hover:text-foreground sm:inline-flex"
+          >
             🎁 Пригласить
           </Link>
           {/* Избранное — только на десктопе */}
-          <Link to="/favorites"
-            className="hidden items-center gap-1.5 rounded-full px-3 py-2 text-sm text-muted-foreground transition hover:bg-muted hover:text-foreground sm:inline-flex">
+          <Link
+            to="/favorites"
+            className="hidden items-center gap-1.5 rounded-full px-3 py-2 text-sm text-muted-foreground transition hover:bg-muted hover:text-foreground sm:inline-flex"
+          >
             <Heart className="h-4 w-4" /> Избранное
           </Link>
 
           {/* Войти / Профиль */}
-          <Link to={user ? "/favorites" : "/auth"}
-            className="inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-soft transition hover:opacity-90">
+          <Link
+            to={user ? "/favorites" : "/auth"}
+            className="inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-soft transition hover:opacity-90"
+          >
             <User className="h-4 w-4" />
             {user ? "Профиль" : "Войти"}
           </Link>

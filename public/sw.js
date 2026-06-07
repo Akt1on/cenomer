@@ -17,22 +17,22 @@ const PRECACHE_URLS = ["/", "/search"];
 
 // ── Install: precache shell ────────────────────────────────────────────────
 self.addEventListener("install", (e) => {
-  e.waitUntil(
-    caches.open(STATIC_CACHE).then((cache) => cache.addAll(PRECACHE_URLS)),
-  );
+  e.waitUntil(caches.open(STATIC_CACHE).then((cache) => cache.addAll(PRECACHE_URLS)));
   self.skipWaiting();
 });
 
 // ── Activate: удаляем старые кэши ─────────────────────────────────────────
 self.addEventListener("activate", (e) => {
   e.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(
-        keys
-          .filter((k) => k.startsWith("cenomer-") && k !== STATIC_CACHE && k !== DATA_CACHE)
-          .map((k) => caches.delete(k)),
+    caches
+      .keys()
+      .then((keys) =>
+        Promise.all(
+          keys
+            .filter((k) => k.startsWith("cenomer-") && k !== STATIC_CACHE && k !== DATA_CACHE)
+            .map((k) => caches.delete(k)),
+        ),
       ),
-    ),
   );
   self.clients.claim();
 });
@@ -76,10 +76,13 @@ async function networkFirstDataStrategy(request) {
     return response;
   } catch {
     const cached = await cache.match(request);
-    return cached ?? new Response(JSON.stringify({ error: "offline", cached: false }), {
-      status: 503,
-      headers: { "Content-Type": "application/json", "X-Offline": "true" },
-    });
+    return (
+      cached ??
+      new Response(JSON.stringify({ error: "offline", cached: false }), {
+        status: 503,
+        headers: { "Content-Type": "application/json", "X-Offline": "true" },
+      })
+    );
   }
 }
 
@@ -109,7 +112,7 @@ async function networkFirstWithOfflineFallback(request) {
     }
     return response;
   } catch {
-    const cached = await caches.match(request) ?? await caches.match("/");
+    const cached = (await caches.match(request)) ?? (await caches.match("/"));
     return cached ?? new Response("Offline", { status: 503 });
   }
 }

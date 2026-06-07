@@ -3,7 +3,15 @@ import { queryOptions, useSuspenseQuery, useQueryClient } from "@tanstack/react-
 import { useEffect, useMemo, useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import { ArrowLeft, ExternalLink, Heart, BellRing, Check } from "lucide-react";
-import { LineChart, Line, ResponsiveContainer, Tooltip, XAxis, YAxis, CartesianGrid } from "recharts";
+import {
+  LineChart,
+  Line,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+} from "recharts";
 import { SiteHeader } from "@/components/SiteHeader";
 import { getProductBySlug } from "@/lib/products.functions";
 import { formatRub, discountPercent } from "@/lib/format";
@@ -38,8 +46,14 @@ export const Route = createFileRoute("/product/$slug")({
         ]
       : [{ title: "Товар — Ценомер" }],
   }),
-  component: () => <Suspense fallback={<ProductPageSkeleton />}><ProductPage /></Suspense>,
-  errorComponent: ({ error }) => <div className="p-8 text-center text-destructive">{error.message}</div>,
+  component: () => (
+    <Suspense fallback={<ProductPageSkeleton />}>
+      <ProductPage />
+    </Suspense>
+  ),
+  errorComponent: ({ error }) => (
+    <div className="p-8 text-center text-destructive">{error.message}</div>
+  ),
   notFoundComponent: () => (
     <div className="grid min-h-screen place-items-center p-8 text-center">Товар не найден</div>
   ),
@@ -91,15 +105,21 @@ function ProductPage() {
     setIsFav(!prev); // оптимистичное обновление
     try {
       if (prev) {
-        const { error } = await supabase.from("favorites").delete().eq("user_id", user.id).eq("product_id", product.id);
+        const { error } = await supabase
+          .from("favorites")
+          .delete()
+          .eq("user_id", user.id)
+          .eq("product_id", product.id);
         if (error) throw error;
         toast.success("Удалено из избранного");
-      hapticLight();
+        hapticLight();
       } else {
-        const { error } = await supabase.from("favorites").insert({ user_id: user.id, product_id: product.id });
+        const { error } = await supabase
+          .from("favorites")
+          .insert({ user_id: user.id, product_id: product.id });
         if (error) throw error;
         toast.success("Добавлено в избранное");
-      hapticSuccess();
+        hapticSuccess();
       }
       queryClient.invalidateQueries({ queryKey: ["favorites"] });
     } catch {
@@ -117,10 +137,14 @@ function ProductPage() {
     setIsTracked(!prev); // оптимистичное обновление
     try {
       if (prev) {
-        const { error } = await supabase.from("price_alerts").delete().eq("user_id", user.id).eq("product_id", product.id);
+        const { error } = await supabase
+          .from("price_alerts")
+          .delete()
+          .eq("user_id", user.id)
+          .eq("product_id", product.id);
         if (error) throw error;
         toast.success("Отслеживание выключено");
-      hapticLight();
+        hapticLight();
       } else {
         const { error } = await supabase.from("price_alerts").insert({
           user_id: user.id,
@@ -129,7 +153,7 @@ function ProductPage() {
         });
         if (error) throw error;
         toast.success("Цена отслеживается");
-      hapticSuccess();
+        hapticSuccess();
       }
     } catch {
       setIsTracked(prev); // откат при ошибке
@@ -148,11 +172,15 @@ function ProductPage() {
       if (!storeMap.has(h.store_id)) storeMap.set(h.store_id, new Map());
       const dayMap = storeMap.get(h.store_id)!;
       const ex = dayMap.get(dateKey);
-      if (ex) { ex.sum += h.price; ex.count += 1; }
-      else dayMap.set(dateKey, { sum: h.price, count: 1 });
+      if (ex) {
+        ex.sum += h.price;
+        ex.count += 1;
+      } else dayMap.set(dateKey, { sum: h.price, count: 1 });
     }
     // Собираем все даты
-    const allDates = [...new Set(data.history.map((h) => new Date(h.recorded_at).toISOString().slice(0, 10)))].sort();
+    const allDates = [
+      ...new Set(data.history.map((h) => new Date(h.recorded_at).toISOString().slice(0, 10))),
+    ].sort();
     // Строим итоговый массив для recharts
     const rows = allDates.map((date) => {
       const row: Record<string, string | number> = { date: date.slice(5) };
@@ -172,7 +200,8 @@ function ProductPage() {
   }, [data.history, product.offers]);
 
   const best = product.offers[0];
-  const savings = product.max_price && product.best_price ? product.max_price - product.best_price : 0;
+  const savings =
+    product.max_price && product.best_price ? product.max_price - product.best_price : 0;
 
   return (
     <div className="min-h-screen bg-background">
@@ -194,7 +223,11 @@ function ProductPage() {
             className="overflow-hidden rounded-3xl border border-border bg-card shadow-soft"
           >
             {product.image_url ? (
-              <img src={product.image_url} alt={product.name} className="aspect-square w-full object-cover" />
+              <img
+                src={product.image_url}
+                alt={product.name}
+                className="aspect-square w-full object-cover"
+              />
             ) : (
               <div className="aspect-square w-full bg-muted" />
             )}
@@ -222,13 +255,17 @@ function ProductPage() {
             )}
 
             <div className="mt-6 rounded-2xl border border-primary/20 bg-gradient-to-br from-primary-soft to-card p-5">
-              <p className="text-xs font-medium uppercase tracking-wider text-primary">Самая низкая цена</p>
+              <p className="text-xs font-medium uppercase tracking-wider text-primary">
+                Самая низкая цена
+              </p>
               <div className="mt-1 flex items-baseline gap-3">
                 <span className="font-display text-5xl font-bold text-success price-glow">
                   {formatRub(product.best_price)}
                 </span>
                 {best?.old_price && (
-                  <span className="text-lg text-muted-foreground line-through">{formatRub(best.old_price)}</span>
+                  <span className="text-lg text-muted-foreground line-through">
+                    {formatRub(best.old_price)}
+                  </span>
                 )}
               </div>
               {best && (
@@ -265,7 +302,9 @@ function ProductPage() {
                   {isTracked ? "Отслеживается" : "Отслеживать"}
                 </button>
                 <button
-                  onClick={() => shareProduct(product.name, `${window.location.origin}/product/${product.slug}`)}
+                  onClick={() =>
+                    shareProduct(product.name, `${window.location.origin}/product/${product.slug}`)
+                  }
                   className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-card px-4 py-2.5 text-sm font-medium transition hover:bg-muted"
                 >
                   <ExternalLink className="h-4 w-4" /> Поделиться
@@ -293,13 +332,19 @@ function ProductPage() {
                   const dp = discountPercent(o.old_price, o.price);
                   const isBest = i === 0;
                   return (
-                    <tr key={o.store_id} className={`border-t border-border ${isBest ? "bg-primary-soft/40" : ""}`}>
+                    <tr
+                      key={o.store_id}
+                      className={`border-t border-border ${isBest ? "bg-primary-soft/40" : ""}`}
+                    >
                       <td className="px-4 py-3">
                         <span
                           className="inline-flex items-center gap-2 font-medium"
                           style={{ color: o.brand_color ?? undefined }}
                         >
-                          <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: o.brand_color ?? undefined }} />
+                          <span
+                            className="h-2.5 w-2.5 rounded-full"
+                            style={{ backgroundColor: o.brand_color ?? undefined }}
+                          />
                           {o.store_name}
                           {isBest && (
                             <span className="rounded-full bg-success px-2 py-0.5 text-[10px] font-semibold text-success-foreground">
@@ -311,7 +356,9 @@ function ProductPage() {
                       <td className="px-4 py-3 text-right">
                         <div className="font-display text-lg font-bold">{formatRub(o.price)}</div>
                         {o.old_price && (
-                          <div className="text-xs text-muted-foreground line-through">{formatRub(o.old_price)}</div>
+                          <div className="text-xs text-muted-foreground line-through">
+                            {formatRub(o.old_price)}
+                          </div>
                         )}
                       </td>
                       <td className="px-4 py-3 text-right">
@@ -346,7 +393,9 @@ function ProductPage() {
         {/* График */}
         {chartData.length > 1 && (
           <section className="mt-12">
-            <h2 className="mb-4 font-display text-2xl font-bold tracking-tight">История цен за 30 дней</h2>
+            <h2 className="mb-4 font-display text-2xl font-bold tracking-tight">
+              История цен за 30 дней
+            </h2>
             <div className="rounded-2xl border border-border bg-card p-4 shadow-soft">
               <div className="h-64">
                 <ResponsiveContainer width="100%" height="100%">

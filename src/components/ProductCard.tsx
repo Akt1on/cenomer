@@ -10,11 +10,26 @@ import type { ProductWithOffers } from "@/lib/products.functions";
 
 // Эмодзи-фоллбэк по категории
 const CATEGORY_EMOJI: Record<string, string> = {
-  moloko: "🥛", molochnye: "🥛", myaso: "🥩", ptitsa: "🍗",
-  ovoshi: "🥦", frukty: "🍎", hleb: "🍞", vypechka: "🥐",
-  ryba: "🐟", kolbasy: "🌭", syry: "🧀", yaytsa: "🥚",
-  napitki: "🧃", sladosti: "🍫", krupy: "🌾", makarony: "🍝",
-  zamorozhennye: "🧊", konservy: "🥫", masla: "🫙", morozhenoe: "🍦",
+  moloko: "🥛",
+  molochnye: "🥛",
+  myaso: "🥩",
+  ptitsa: "🍗",
+  ovoshi: "🥦",
+  frukty: "🍎",
+  hleb: "🍞",
+  vypechka: "🥐",
+  ryba: "🐟",
+  kolbasy: "🌭",
+  syry: "🧀",
+  yaytsa: "🥚",
+  napitki: "🧃",
+  sladosti: "🍫",
+  krupy: "🌾",
+  makarony: "🍝",
+  zamorozhennye: "🧊",
+  konservy: "🥫",
+  masla: "🫙",
+  morozhenoe: "🍦",
 };
 
 function ProductImageFallback({ categorySlug }: { categorySlug: string | null }) {
@@ -34,10 +49,16 @@ interface ProductCardProps {
   cartIds?: Set<string>;
 }
 
-export function ProductCard({ product, index = 0, compareMode = false, cartIds }: ProductCardProps) {
+export function ProductCard({
+  product,
+  index = 0,
+  compareMode = false,
+  cartIds,
+}: ProductCardProps) {
   const best = product.offers[0];
   const dp = best ? discountPercent(best.old_price, best.price) : null;
-  const savings = product.max_price && product.best_price ? product.max_price - product.best_price : 0;
+  const savings =
+    product.max_price && product.best_price ? product.max_price - product.best_price : 0;
   const { addItem, items } = useShoppingList();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
@@ -102,16 +123,22 @@ export function ProductCard({ product, index = 0, compareMode = false, cartIds }
       transition={{ duration: 0.3, delay: shouldAnimate ? Math.min(index * 0.03, 0.25) : 0 }}
       className="group relative"
     >
-      <Link to="/product/$slug" params={{ slug: product.slug }}
-        className="block h-full overflow-hidden rounded-2xl border border-border bg-card shadow-soft transition hover:-translate-y-0.5 hover:shadow-lift">
-
+      <Link
+        to="/product/$slug"
+        params={{ slug: product.slug }}
+        className="block h-full overflow-hidden rounded-2xl border border-border bg-card shadow-soft transition hover:-translate-y-0.5 hover:shadow-lift"
+      >
         {/* Фото */}
         <div className="relative aspect-square overflow-hidden bg-muted">
           {product.image_url ? (
-            <img src={product.image_url} alt={product.name}
+            <img
+              src={product.image_url}
+              alt={product.name}
               className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
               loading="lazy"
-              onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+              onError={(e) => {
+                (e.target as HTMLImageElement).style.display = "none";
+              }}
             />
           ) : (
             <ProductImageFallback categorySlug={product.category_slug} />
@@ -130,25 +157,34 @@ export function ProductCard({ product, index = 0, compareMode = false, cartIds }
 
         {/* Текст */}
         <div className="space-y-2 p-3">
-          <h3 className="line-clamp-2 min-h-[2.6em] text-sm font-medium leading-snug">{product.name}</h3>
+          <h3 className="line-clamp-2 min-h-[2.6em] text-sm font-medium leading-snug">
+            {product.name}
+          </h3>
           {product.volume && <p className="text-xs text-muted-foreground">{product.volume}</p>}
           <div className="flex items-end justify-between gap-2 pt-1">
             <div>
               <p className="text-[10px] uppercase tracking-wider text-muted-foreground">от</p>
-              <p className="font-display text-xl font-bold text-success">{formatRub(product.best_price)}</p>
+              <p className="font-display text-xl font-bold text-success">
+                {formatRub(product.best_price)}
+              </p>
             </div>
             {savings > 0 && (
               <span className="inline-flex items-center gap-1 rounded-full bg-primary-soft px-2 py-1 text-[11px] font-medium text-primary">
-                <TrendingDown className="h-3 w-3" />{formatRub(savings)}
+                <TrendingDown className="h-3 w-3" />
+                {formatRub(savings)}
               </span>
             )}
           </div>
           <div className="flex flex-wrap gap-1 pt-1">
             {product.offers.slice(0, 4).map((o) => (
-              <Link key={o.store_id} to="/store/$slug" params={{ slug: o.store_slug }}
+              <Link
+                key={o.store_id}
+                to="/store/$slug"
+                params={{ slug: o.store_slug }}
                 onClick={(e) => e.stopPropagation()}
                 className="rounded-md px-1.5 py-0.5 text-[10px] font-medium transition hover:opacity-80"
-                style={{ backgroundColor: `${o.brand_color}1a`, color: o.brand_color ?? undefined }}>
+                style={{ backgroundColor: `${o.brand_color}1a`, color: o.brand_color ?? undefined }}
+              >
                 {o.store_name}
               </Link>
             ))}
@@ -158,14 +194,18 @@ export function ProductCard({ product, index = 0, compareMode = false, cartIds }
 
       {/* Кнопки действий */}
       <div className={actionButtonsClass}>
-        <button onClick={addToCart}
-          className={`flex flex-1 items-center justify-center gap-1 rounded-xl py-1.5 text-[11px] font-semibold transition ${inCart ? "bg-primary text-primary-foreground" : "bg-card/90 text-foreground backdrop-blur-sm hover:bg-primary hover:text-primary-foreground border border-border"}`}>
+        <button
+          onClick={addToCart}
+          className={`flex flex-1 items-center justify-center gap-1 rounded-xl py-1.5 text-[11px] font-semibold transition ${inCart ? "bg-primary text-primary-foreground" : "bg-card/90 text-foreground backdrop-blur-sm hover:bg-primary hover:text-primary-foreground border border-border"}`}
+        >
           <ShoppingCart className="h-3 w-3" />
           {inCart ? "В списке" : "В список"}
         </button>
-        <button onClick={addToCompare}
+        <button
+          onClick={addToCompare}
           className="grid h-7 w-7 place-items-center rounded-xl border border-border bg-card/90 text-muted-foreground backdrop-blur-sm transition hover:bg-muted"
-          title="Добавить к сравнению">
+          title="Добавить к сравнению"
+        >
           <BarChart3 className="h-3.5 w-3.5" />
         </button>
       </div>

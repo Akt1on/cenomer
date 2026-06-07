@@ -9,6 +9,7 @@ vercel --prod
 
 После деплоя получишь URL типа `https://cenomer-abc123.vercel.app`.
 Открой `capacitor.config.ts` и замени строку:
+
 ```ts
 url: "https://cenomer.vercel.app",  // ← сюда свой URL
 ```
@@ -28,6 +29,7 @@ npm install
 1. Создай два файла по инструкции в `assets/README.md`
 2. Положи их как `assets/icon.png` и `assets/splash.png`
 3. Запусти генерацию:
+
 ```bash
 npm run mobile:icons
 ```
@@ -75,10 +77,13 @@ npm run mobile:android
    - `google-services.json` → в папку `android/app/`
 5. В Firebase Console → Cloud Messaging → скопируй Server Key
 6. Добавь в Supabase:
+
 ```bash
 supabase secrets set FCM_SERVER_KEY=AAAAxxxxxxx...
 ```
+
 7. Задеплой Edge Function:
+
 ```bash
 supabase functions deploy send-price-alerts
 ```
@@ -88,11 +93,13 @@ supabase functions deploy send-price-alerts
 ## Шаг 8: Публикация
 
 ### Google Play
+
 1. В Android Studio: Build → Generate Signed Bundle/APK → Android App Bundle
 2. Загрузи `.aab` в Google Play Console
 3. Заполни описание, скриншоты, категорию (Покупки)
 
 ### App Store
+
 1. В Xcode: Product → Archive
 2. Загрузи через Xcode Organizer или Transporter
 3. В App Store Connect заполни описание, скриншоты

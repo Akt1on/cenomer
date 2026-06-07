@@ -15,13 +15,17 @@
  */
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const sb = createClient(
-  Deno.env.get("SUPABASE_URL")!,
-  Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-);
+const sb = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
 const RESEND_KEY = Deno.env.get("RESEND_API_KEY");
 const APP_URL = Deno.env.get("APP_URL") ?? "https://cenomer.vercel.app";
+
+type DigestUser = {
+  email?: string;
+  user_metadata?: {
+    unsubscribed_digest?: boolean;
+  };
+};
 
 async function sendEmail(to: string, subject: string, html: string): Promise<boolean> {
   if (!RESEND_KEY) return false;
@@ -90,7 +94,7 @@ function buildEmailHtml(deals: Deal[]): string {
         </table>
       </td>
     </tr>
-  `
+  `,
     )
     .join("");
 
@@ -180,7 +184,7 @@ Deno.serve(async (req) => {
   }
 
   // ✅ FIX 5.2: listUsers возвращает max 1000 — пагинируем
-  let allUsers: any[] = [];
+  let allUsers: DigestUser[] = [];
   let page = 1;
   while (true) {
     const { data } = await sb.auth.admin.listUsers({ page, perPage: 1000 });
@@ -203,14 +207,14 @@ Deno.serve(async (req) => {
       batch.map((email) =>
         sendEmail(email, subject, html).then((ok) => {
           if (ok) sent++;
-        })
-      )
+        }),
+      ),
     );
     if (i + 10 < emails.length) await new Promise((r) => setTimeout(r, 1000));
   }
 
   return new Response(
     JSON.stringify({ ok: true, sent, total: emails.length, deals: deals.length }),
-    { headers: { "Content-Type": "application/json" } }
+    { headers: { "Content-Type": "application/json" } },
   );
 });

@@ -34,7 +34,7 @@ function useProductsBySlug(slugs: string[]) {
         queryKey: ["product", slug],
         queryFn: () => getProductBySlug({ data: { slug } }),
         staleTime: 5 * 60_000,
-      })
+      }),
     ),
   });
   return results;
@@ -47,9 +47,7 @@ function ComparePage() {
   const slugs = slugsParam.split(",").filter(Boolean).slice(0, 4);
   const results = useProductsBySlug(slugs);
   // ✅ FIX 5.6: отслеживаем какие slugs вернули null (товар не найден)
-  const products = results
-    .map((r) => r.data?.product)
-    .filter(Boolean) as ProductWithOffers[];
+  const products = results.map((r) => r.data?.product).filter(Boolean) as ProductWithOffers[];
 
   // Все уникальные магазины из всех товаров
   const allStores = useMemo(() => {
@@ -80,7 +78,9 @@ function ComparePage() {
   // ✅ IMPROVEMENT: показываем скелетон пока хотя бы один запрос грузится
   const isLoading = results.some((r) => r.isLoading);
   if (isLoading) return <ProductPageSkeleton />;
-  const notFoundSlugs = slugs.filter((slug, i) => !results[i].isLoading && !results[i].data?.product);
+  const notFoundSlugs = slugs.filter(
+    (slug, i) => !results[i].isLoading && !results[i].data?.product,
+  );
 
   if (products.length === 0) {
     return (
@@ -121,8 +121,13 @@ function ComparePage() {
         {notFoundSlugs.length > 0 && (
           <div className="mb-4 flex flex-wrap gap-2">
             {notFoundSlugs.map((slug) => (
-              <div key={slug} className="flex items-center gap-2 rounded-xl border border-dashed border-border bg-card px-4 py-3 text-sm text-muted-foreground">
-                <span>Товар не найден: <code className="font-mono text-xs">{slug}</code></span>
+              <div
+                key={slug}
+                className="flex items-center gap-2 rounded-xl border border-dashed border-border bg-card px-4 py-3 text-sm text-muted-foreground"
+              >
+                <span>
+                  Товар не найден: <code className="font-mono text-xs">{slug}</code>
+                </span>
                 <button
                   onClick={() => removeProduct(slug)}
                   className="ml-2 rounded-lg p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
@@ -240,7 +245,9 @@ function ComparePage() {
                                     {formatRub(offer.old_price)}
                                   </span>
                                   <span className="text-xs font-medium text-promo">
-                                    −{Math.round(discountPercent(offer.old_price, offer.price) ?? 0)}%
+                                    −
+                                    {Math.round(discountPercent(offer.old_price, offer.price) ?? 0)}
+                                    %
                                   </span>
                                 </div>
                               )}

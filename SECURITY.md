@@ -3,12 +3,14 @@
 ## ✅ Completed Security Measures
 
 ### 1. **Input Validation & Type Safety**
+
 - ✅ TypeScript strict mode enabled
 - ✅ Zod validation for form inputs (auth, search)
 - ✅ Server-side validation for API requests
 - ✅ No use of `any` type in core logic
 
 ### 2. **Authentication & Authorization**
+
 - ✅ Supabase Auth integration with secure session handling
 - ✅ JWT tokens stored securely
 - ✅ Protected routes with auth context
@@ -16,6 +18,7 @@
 - ✅ CORS configured (inherited from backend)
 
 ### 3. **Data Protection**
+
 - ✅ HTTPS enforced (depends on deployment)
 - ✅ Sensitive data not logged (passwords, API keys)
 - ✅ No hardcoded secrets in code
@@ -23,6 +26,7 @@
 - ✅ Supabase RLS policies for database access
 
 ### 4. **Frontend Security**
+
 - ✅ CSP-compatible code structure
 - ✅ XSS protection via React's automatic escaping
 - ✅ No `dangerouslySetInnerHTML` used
@@ -30,12 +34,14 @@
 - ✅ Sanitized user inputs in search
 
 ### 5. **API Security**
+
 - ✅ Server functions use `createServerFn` (type-safe RPC)
 - ✅ Input validators on all endpoints
 - ✅ No sensitive data exposed in API responses
 - ✅ Firecrawl API key protected (server-side only)
 
 ### 6. **Build & Dependencies**
+
 - ✅ Package lock file tracked
 - ✅ Dependabot configured for security updates
 - ✅ Known vulnerabilities checked (run `npm audit`)
@@ -44,6 +50,7 @@
 ## 🔐 Critical Security Recommendations (MUST DO)
 
 ### 1. **Deployment Security**
+
 - [ ] Enable HTTPS/TLS 1.2+ on all endpoints
 - [ ] Set secure HTTP headers:
   ```
@@ -64,6 +71,7 @@
   ```
 
 ### 2. **Authentication Hardening**
+
 - [ ] Enable MFA/2FA for user accounts (Supabase config)
 - [ ] Session timeout: 15-30 minutes for sensitive actions
 - [ ] Rate limit login attempts (5 attempts per 15 min)
@@ -71,6 +79,7 @@
 - [ ] Implement CSRF tokens for state-changing operations
 
 ### 3. **Database Security (Supabase)**
+
 - [ ] Enable RLS on all tables
 - [ ] Audit logs enabled
 - [ ] Backup strategy configured (daily backups)
@@ -78,6 +87,7 @@
 - [ ] Regular vulnerability scanning
 
 ### 4. **API & Backend Security**
+
 - [ ] Rate limiting on all endpoints (10-100 req/min per IP)
 - [ ] Input size limits enforced
 - [ ] Request timeouts set (30-60 seconds)
@@ -85,6 +95,7 @@
 - [ ] API versioning in place
 
 ### 5. **Third-Party Services**
+
 - [ ] Supabase API key restrictions:
   - [ ] Restrict to POST/GET methods only
   - [ ] Limit to specific tables/columns
@@ -93,6 +104,7 @@
 - [ ] Monitor for unusual API usage patterns
 
 ### 6. **Data Privacy (GDPR/Privacy Law)**
+
 - [ ] Privacy policy page created
 - [ ] Cookie consent banner if tracking used
 - [ ] User data export functionality
@@ -102,6 +114,7 @@
 ## 🛡️ Monitoring & Incident Response
 
 ### 1. **Logging & Monitoring**
+
 - [ ] Application logging configured (Sentry, LogRocket, etc.)
 - [ ] Error tracking enabled
 - [ ] Performance monitoring active
@@ -109,6 +122,7 @@
 - [ ] Log retention: 90 days minimum
 
 ### 2. **Incident Response Plan**
+
 - [ ] Security incident response procedure documented
 - [ ] Emergency contacts established
 - [ ] Breach notification plan in place
@@ -149,6 +163,7 @@ npx snyk monitor
 ## 📝 Code Review Checklist
 
 Before each release:
+
 - [ ] No hardcoded secrets/credentials
 - [ ] All inputs validated and sanitized
 - [ ] Error handling doesn't expose sensitive data

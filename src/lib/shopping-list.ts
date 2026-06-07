@@ -40,7 +40,11 @@ export const useShoppingList = create<ShoppingListStore>()(
         set((s) => {
           const exists = s.items.find((i) => i.product.id === product.id);
           if (exists) {
-            return { items: s.items.map((i) => i.product.id === product.id ? { ...i, qty: i.qty + 1 } : i) };
+            return {
+              items: s.items.map((i) =>
+                i.product.id === product.id ? { ...i, qty: i.qty + 1 } : i,
+              ),
+            };
           }
           return { items: [...s.items, { product, qty: 1, addedAt: new Date().toISOString() }] };
         }),
@@ -50,9 +54,10 @@ export const useShoppingList = create<ShoppingListStore>()(
 
       updateQty: (productId, qty) =>
         set((s) => ({
-          items: qty <= 0
-            ? s.items.filter((i) => i.product.id !== productId)
-            : s.items.map((i) => i.product.id === productId ? { ...i, qty } : i),
+          items:
+            qty <= 0
+              ? s.items.filter((i) => i.product.id !== productId)
+              : s.items.map((i) => (i.product.id === productId ? { ...i, qty } : i)),
         })),
 
       clearAll: () => set({ items: [] }),

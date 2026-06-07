@@ -16,7 +16,9 @@ export const Route = createFileRoute("/api/public/hooks/refresh-prices")({
         const cronSecret = process.env.CRON_SECRET;
         if (!cronSecret) {
           console.error("[refresh-prices] CRON_SECRET не задан в окружении!");
-          return new Response(JSON.stringify({ error: "Server misconfiguration" }), { status: 500 });
+          return new Response(JSON.stringify({ error: "Server misconfiguration" }), {
+            status: 500,
+          });
         }
         const incoming = request.headers.get("x-cron-secret");
         if (incoming !== cronSecret) {
@@ -58,8 +60,10 @@ export const Route = createFileRoute("/api/public/hooks/refresh-prices")({
             }),
           ]);
 
-          if (updateResult.error) console.error("[refresh-prices] update error:", updateResult.error.message);
-          if (insertResult.error) console.error("[refresh-prices] history insert error:", insertResult.error.message);
+          if (updateResult.error)
+            console.error("[refresh-prices] update error:", updateResult.error.message);
+          if (insertResult.error)
+            console.error("[refresh-prices] history insert error:", insertResult.error.message);
 
           return !updateResult.error && !insertResult.error;
         });
@@ -68,7 +72,12 @@ export const Route = createFileRoute("/api/public/hooks/refresh-prices")({
         const updated = results.filter(Boolean).length;
 
         return new Response(
-          JSON.stringify({ ok: true, updated, total: offers?.length ?? 0, refreshed_at: new Date().toISOString() }),
+          JSON.stringify({
+            ok: true,
+            updated,
+            total: offers?.length ?? 0,
+            refreshed_at: new Date().toISOString(),
+          }),
           { headers: { "Content-Type": "application/json" } },
         );
       },

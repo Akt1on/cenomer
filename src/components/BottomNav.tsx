@@ -37,9 +37,7 @@ export function BottomNav() {
       <div className="flex h-14 items-stretch">
         {TABS.map((tab) => {
           const isActive =
-            tab.to === "/"
-              ? location.pathname === "/"
-              : location.pathname.startsWith(tab.to);
+            tab.to === "/" ? location.pathname === "/" : location.pathname.startsWith(tab.to);
 
           return (
             <Link
@@ -63,9 +61,7 @@ export function BottomNav() {
                 )}
               </span>
               <span>{tab.label}</span>
-              {isActive && (
-                <span className="absolute -top-px h-0.5 w-8 rounded-full bg-primary" />
-              )}
+              {isActive && <span className="absolute -top-px h-0.5 w-8 rounded-full bg-primary" />}
             </Link>
           );
         })}

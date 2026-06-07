@@ -7,7 +7,7 @@
  */
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { registerPushNotifications, isNative } from "./use-native";
+import { registerPushNotifications, isNative, getPlatform } from "./use-native";
 import type { User } from "@supabase/supabase-js";
 
 export function usePushNotifications(user: User | null) {
@@ -23,7 +23,7 @@ export function usePushNotifications(user: User | null) {
         {
           user_id: user!.id,
           token,
-          platform: (window as any).Capacitor?.getPlatform?.() ?? "unknown",
+          platform: getPlatform(),
           updated_at: new Date().toISOString(),
         },
         { onConflict: "user_id,token" },
@@ -48,7 +48,9 @@ export function usePushNotifications(user: User | null) {
           },
         );
         cleanup = () => listener.remove();
-      } catch {}
+      } catch {
+        /* Push listener unavailable */
+      }
     })();
 
     return () => cleanup?.();

@@ -27,8 +27,14 @@ export const Route = createFileRoute("/")({
     ],
   }),
   loader: ({ context }) => context.queryClient.ensureQueryData(homeQuery),
-  component: () => <Suspense fallback={<HomePageSkeleton />}><IndexPage /></Suspense>,
-  errorComponent: ({ error }) => <div className="p-8 text-center text-destructive">{error.message}</div>,
+  component: () => (
+    <Suspense fallback={<HomePageSkeleton />}>
+      <IndexPage />
+    </Suspense>
+  ),
+  errorComponent: ({ error }) => (
+    <div className="p-8 text-center text-destructive">{error.message}</div>
+  ),
 });
 
 const STORES = [
@@ -38,23 +44,47 @@ const STORES = [
   { name: "Лента", color: "#003C96" },
 ];
 
-
 // ── Keyword → category slug маппинг для персонализации ──────────────────
 const KEYWORD_CATEGORY: Record<string, string> = {
-  молоко: "molochnye", кефир: "molochnye", йогурт: "molochnye", сыр: "syry",
-  мясо: "myaso", курица: "ptitsa", говядина: "myaso", свинина: "myaso",
-  рыба: "ryba", лосось: "ryba", треска: "ryba",
-  хлеб: "hleb", батон: "hleb", булка: "vypechka",
-  яйца: "yaytsa", яйцо: "yaytsa",
-  колбаса: "kolbasy", сосиски: "kolbasy",
-  макарон: "makarony", паста: "makarony",
-  крупа: "krupy", рис: "krupy", гречка: "krupy",
-  масло: "masla", оливковое: "masla",
-  бананы: "frukty", яблоки: "frukty", апельсин: "frukty",
-  овощи: "ovoshi", помидоры: "ovoshi", огурцы: "ovoshi",
+  молоко: "molochnye",
+  кефир: "molochnye",
+  йогурт: "molochnye",
+  сыр: "syry",
+  мясо: "myaso",
+  курица: "ptitsa",
+  говядина: "myaso",
+  свинина: "myaso",
+  рыба: "ryba",
+  лосось: "ryba",
+  треска: "ryba",
+  хлеб: "hleb",
+  батон: "hleb",
+  булка: "vypechka",
+  яйца: "yaytsa",
+  яйцо: "yaytsa",
+  колбаса: "kolbasy",
+  сосиски: "kolbasy",
+  макарон: "makarony",
+  паста: "makarony",
+  крупа: "krupy",
+  рис: "krupy",
+  гречка: "krupy",
+  масло: "masla",
+  оливковое: "masla",
+  бананы: "frukty",
+  яблоки: "frukty",
+  апельсин: "frukty",
+  овощи: "ovoshi",
+  помидоры: "ovoshi",
+  огурцы: "ovoshi",
 };
 
-interface CategoryItem { id: string; slug: string; name: string; icon: string; }
+interface CategoryItem {
+  id: string;
+  slug: string;
+  name: string;
+  icon: string | null;
+}
 
 function PersonalizedCategories({ allCategories }: { allCategories: CategoryItem[] }) {
   const personalizedSlugs = useMemo(() => {
@@ -65,18 +95,20 @@ function PersonalizedCategories({ allCategories }: { allCategories: CategoryItem
         const words = q.toLowerCase().split(/\s+/);
         for (const word of words) {
           for (const [kw, slug] of Object.entries(KEYWORD_CATEGORY)) {
-            if (word.startsWith(kw)) { slugSet.add(slug); break; }
+            if (word.startsWith(kw)) {
+              slugSet.add(slug);
+              break;
+            }
           }
         }
       }
       return [...slugSet].slice(0, 3);
-    } catch { return []; }
+    } catch {
+      return [];
+    }
   }, []);
 
-  const catMap = useMemo(
-    () => new Map(allCategories.map((c) => [c.slug, c])),
-    [allCategories]
-  );
+  const catMap = useMemo(() => new Map(allCategories.map((c) => [c.slug, c])), [allCategories]);
 
   const personalizedCats = personalizedSlugs
     .map((s) => catMap.get(s))
@@ -85,14 +117,17 @@ function PersonalizedCategories({ allCategories }: { allCategories: CategoryItem
   const showPersonalized = personalizedCats.length > 0;
   const label = showPersonalized ? "Ваши категории" : "Популярные категории";
   const displayCats = showPersonalized
-    ? [...personalizedCats, ...allCategories.filter((c) => !personalizedSlugs.includes(c.slug)).slice(0, 4 - personalizedCats.length)]
+    ? [
+        ...personalizedCats,
+        ...allCategories
+          .filter((c) => !personalizedSlugs.includes(c.slug))
+          .slice(0, 4 - personalizedCats.length),
+      ]
     : allCategories;
 
   return (
     <>
-      <h2 className="mb-5 font-display text-2xl font-bold tracking-tight sm:text-3xl">
-        {label}
-      </h2>
+      <h2 className="mb-5 font-display text-2xl font-bold tracking-tight sm:text-3xl">{label}</h2>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
         {displayCats.map((c, i) => (
           <motion.div
@@ -151,12 +186,12 @@ function IndexPage() {
               Самая низкая цена{" "}
               <span className="bg-gradient-to-r from-primary to-emerald-500 bg-clip-text text-transparent">
                 на продукты
-              </span>
-              {" "}за 1 клик
+              </span>{" "}
+              за 1 клик
             </h1>
             <p className="mx-auto mt-4 max-w-2xl text-balance text-base text-muted-foreground sm:text-lg">
-              Ценомер сравнивает цены в крупнейших супермаркетах Москвы и области.
-              Найдите выгодное предложение мгновенно.
+              Ценомер сравнивает цены в крупнейших супермаркетах Москвы и области. Найдите выгодное
+              предложение мгновенно.
             </p>
           </motion.div>
 

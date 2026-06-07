@@ -22,11 +22,9 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   });
 
   const systemDark =
-    typeof window !== "undefined" &&
-    window.matchMedia("(prefers-color-scheme: dark)").matches;
+    typeof window !== "undefined" && window.matchMedia("(prefers-color-scheme: dark)").matches;
 
-  const resolved: "light" | "dark" =
-    theme === "system" ? (systemDark ? "dark" : "light") : theme;
+  const resolved: "light" | "dark" = theme === "system" ? (systemDark ? "dark" : "light") : theme;
 
   useEffect(() => {
     const root = document.documentElement;
