@@ -1,1 +1,7 @@
-Full professional guide with SQL for price_history trigger, auto-delete old records with pg_cron, indexes, and strategy to stay under 500MB while keeping data fresh and актуальные.
+Full professional guide:
+- Strategy for staying under 500MB Supabase Free
+- Incremental scraping
+- Price history only on change
+- Auto cleanup with pg_cron
+- SQL scripts for triggers, indexes, vacuum
+- Recommended limits and monitoring

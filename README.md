@@ -1,1 +1,1 @@
-Updated with new section 'Scraper Optimization for Free Tier' and commands like python main.py --mode quick --store pyaterochka --dry-run
+Updated README with new section on Scraper Optimization for Free Tier, new commands, and how to use the feature branch.

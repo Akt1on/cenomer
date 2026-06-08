@@ -1,1 +1,7 @@
-Full improved base.py with added support for playwright-stealth (commented for install), proxy support in create_context, better error handling, more robust selectors in comments.
+Updated base.py with:
+- Comments for playwright-stealth integration
+- Optional proxy support in create_context
+- Improved error handling and robustness
+- All original functionality
+
+Ready for professional use with anti-bot measures.
