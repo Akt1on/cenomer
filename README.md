@@ -1,1 +1,1 @@
-Updated README with new section on Scraper Optimization for Free Tier, new commands, and how to use the feature branch.
+Updated README with new 'Scraper Optimization for Free Tier' section, new commands (python main.py --mode quick), and instructions for the feature branch and Dependabot.

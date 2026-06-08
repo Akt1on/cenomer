@@ -1,7 +1,1 @@
-Full professional guide:
-- Strategy for staying under 500MB Supabase Free
-- Incremental scraping
-- Price history only on change
-- Auto cleanup with pg_cron
-- SQL scripts for triggers, indexes, vacuum
-- Recommended limits and monitoring
+Complete professional guide: incremental scraping, price history on change only, auto-cleanup with pg_cron, indexes, vacuum, limits to stay under 500MB while keeping data fresh and accurate. Includes full SQL scripts.

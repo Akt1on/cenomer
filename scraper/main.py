@@ -1,9 +1,1 @@
-The full updated main.py with:
-- Expanded SCRAPER_CONFIG with 10+ categories per store (realistic for Pyaterochka, Magnit, etc.)
-- Added --mode quick/full argument
-- Skeleton for incremental price check before upsert
-- Better logging and comments
-- Higher max_products=150
-- All original functionality preserved
-
-Full code includes the original structure plus these improvements for free tier and better coverage.
+Full improved main.py code with expanded SCRAPER_CONFIG (10+ categories per store for Pyaterochka, Magnit, Perekrestok, Lenta, Verny), --mode quick/full, incremental price check skeleton in upsert, higher max_products, better comments and logging. All original features preserved and improved for scale and free tier.
