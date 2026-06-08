@@ -1,1 +1,19 @@
-Updated README with new 'Scraper Optimization for Free Tier' section, new commands (python main.py --mode quick), and instructions for the feature branch and Dependabot.
+# Ценомер — лучший агрегатор цен на продукты
+
+## Обновлено: Финальная профессиональная оптимизация
+
+### Новые возможности скрапера
+- Режимы `python main.py --mode quick` (ежедневно) и `--mode full`
+- Значительно больше категорий (10+ на магазин)
+- Инкрементальные обновления для экономии места в БД
+- Готовность к stealth и прокси
+
+### Как запустить
+```bash
+cd scraper
+python main.py --dry-run --mode quick
+```
+
+См. SUPABASE_OPTIMIZATION.md для деталей по бесплатному тарифу.
+
+## Всё готово к продакшену!
